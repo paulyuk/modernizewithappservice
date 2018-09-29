@@ -15,8 +15,11 @@ namespace SmartHotel.Registration
 
             if (!string.IsNullOrEmpty(uri))
             {
+                System.Diagnostics.Trace.TraceInformation("'WcfServiceUri' env var is: " + uri.ToString());
                 client.Endpoint.Address = new System.ServiceModel.EndpointAddress(uri);
             }
+
+            System.Diagnostics.Trace.TraceInformation("WCF endpoint is: " + client.Endpoint.Address.ToString());
 
             return client;
 

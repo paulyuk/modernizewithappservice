@@ -176,6 +176,7 @@
     <Content Include="fonts\Poppins-SemiBold.ttf" />
     <Content Include="fonts\Poppins-SemiBold.woff" />
     <None Include="Properties\PublishProfiles\smarthotel360webzlngzxjoygr4q - Web Deploy.pubxml" />
+    <None Include="Properties\PublishProfiles\SmartHotelRegistrationWebIgnite - Web Deploy.pubxml" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
     <Content Include="images\Logo.png" />
     <Content Include="Scripts\bootstrap.js" />
