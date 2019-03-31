@@ -1,0 +1,624 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "relaynamespaceName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "smarthotelrelay"
+    },
+    "hybridconnectionName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "smarthotelcorpnet"
+    },
+    "hybridhostname": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "localhost"
+    },
+    "hybridport": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "2901"
+    },
+    "smarthotelappinsightsName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "smarthotelappinsights"
+    },
+    "smarthotelplanName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "smarthotelplan"
+    },
+    "smarthotelregistrationwebName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "smarthotelregistrationweb"
+    },
+    "smarthotelregistrationwcfName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "smarthotelregistrationwcf"
+    },
+    "smarthotelplanSkuName": {
+      "type": "string",
+      "defaultValue": "B1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "metadata": {
+        "description": "Describes plan's pricing tier and capacity. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      }
+    },
+    "smarthotelsqlserverAdminLoginUsername": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "dbadmin"
+    },
+    "smarthotelsqlserverAdminLoginPassword": {
+      "type": "securestring"
+    },
+    "smarthotelsqlserverName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "smarthotelsqlserver"
+    },
+    "smarthotelregistrationsqldbName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "smarthotelregistrationsqldb"
+    },
+    "smarthotelregistrationsqldbCollation": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    "useuniquenamesuffixes": {
+      "type": "string",
+      "defaultValue": "Enabled",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ]
+    },
+    "smarthotelregistrationsqldbEdition": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ]
+    },
+    "smarthotelregistrationsqldbRequestedServiceObjectiveName": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "S0",
+        "S1",
+        "S2",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "metadata": {
+        "description": "Describes the performance level for Edition"
+      }
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "apiVersion": "2017-04-01",
+    "relaynamespaceName": "[if(equals(parameters('useuniquenamesuffixes'),'Enabled'), concat(parameters('relaynamespaceName'),'-', uniqueString(resourceGroup().id)), parameters('relaynamespaceName'))]",
+    "hybridConnectionResourceId": "[resourceId(resourceGroup().name, 'Microsoft.Relay/Namespaces/Hybridconnections', variables('relaynamespaceName'), parameters('hybridConnectionName'))]",
+    "smarthotelregistrationwebName": "[if(equals(parameters('useuniquenamesuffixes'),'Enabled'), concat(parameters('smarthotelregistrationwebName'),'-', uniqueString(resourceGroup().id)), parameters('smarthotelregistrationwebName'))]",
+    "smarthotelsqlserverName": "[if(equals(parameters('useuniquenamesuffixes'),'Enabled'), concat(parameters('smarthotelsqlserverName'),'-', uniqueString(resourceGroup().id)), parameters('smarthotelsqlserverName'))]",
+    "smarthotelregistrationwcfName": "[if(equals(parameters('useuniquenamesuffixes'),'Enabled'), concat(parameters('smarthotelregistrationwcfName'),'-', uniqueString(resourceGroup().id)), parameters('smarthotelregistrationwcfName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "name": "[variables('relaynamespaceName')]",
+      "type": "Microsoft.Relay/Namespaces",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {},
+      "tags": {
+        "displayName": "smarthotelrelay"
+      },
+      "resources": [
+        {
+          "apiVersion": "[variables('apiVersion')]",
+          "name": "[parameters('hybridConnectionName')]",
+          "type": "HybridConnections",
+          "dependsOn": [
+            "[concat('Microsoft.Relay/namespaces/', variables('relaynamespaceName'))]"
+          ],
+          "tags": {
+            "displayName": "smarthotelhybridconnection"
+          },
+          "properties": {
+            "requiresClientAuthorization": "true"
+          },
+          "resources": [
+            {
+              "apiVersion": "[variables('apiVersion')]",
+              "name": "[concat(variables('relaynamespaceName'), '/', parameters('hybridconnectionName'), '/', 'defaultListener')]",
+              "type": "Microsoft.Relay/namespaces/hybridConnections/authorizationRules",
+              "dependsOn": [
+                "[parameters('hybridConnectionName')]",
+                "[concat('Microsoft.Relay/namespaces/', variables('relaynamespaceName'))]"
+              ],
+              "tags": {
+                "displayName": "defaultListener"
+              },
+              "properties": {
+                "Rights": [
+                  "Listen"
+                ]
+              }
+            },
+            {
+              "apiVersion": "[variables('apiVersion')]",
+              "name": "[concat(variables('relaynamespaceName'), '/', parameters('hybridconnectionName'), '/', 'defaultSender')]",
+              "type": "Microsoft.Relay/namespaces/hybridConnections/authorizationRules",
+              "dependsOn": [
+                "[parameters('hybridConnectionName')]",
+                "[concat('Microsoft.Relay/namespaces/', variables('relaynamespaceName'))]"
+              ],
+              "tags": {
+                "displayName": "defaultSender"
+              },
+              "properties": {
+                "Rights": [
+                  "Send"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    
+    {
+      "name": "smarthotelappinsights",
+      "type": "Microsoft.Insights/components",
+      "location": "East US",
+      "apiVersion": "2014-04-01",
+      "dependsOn": [
+      ],
+      "tags": {
+        "displayName": "smarthotelappinsights",
+        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('smarthotelregistrationwebName'))]": "Resource"
+      },
+      "properties": {
+        "applicationId": "[parameters('smarthotelappinsightsName')]"
+      }
+    },
+    {
+      "name": "[variables('smarthotelsqlserverName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01-preview",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "smarthotelsqlserver"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('smarthotelsqlserverAdminLoginUsername')]",
+        "administratorLoginPassword": "[parameters('smarthotelsqlserverAdminLoginPassword')]"
+      },
+      "resources": [
+        {
+          "name": "AllowAllWindowsAzureIps",
+          "type": "firewallrules",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('smarthotelsqlserverName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        },
+        {
+          "name": "[parameters('smarthotelregistrationsqldbName')]",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('smarthotelsqlserverName'))]"
+          ],
+          "tags": {
+            "displayName": "smarthotelregistrationsqldb"
+          },
+          "properties": {
+            "collation": "[parameters('smarthotelregistrationsqldbCollation')]",
+            "edition": "[parameters('smarthotelregistrationsqldbEdition')]",
+            "maxSizeBytes": "1073741824",
+            "requestedServiceObjectiveName": "[parameters('smarthotelregistrationsqldbRequestedServiceObjectiveName')]"
+          }
+        }
+      ]
+    },
+    {
+      "name": "[parameters('smarthotelplanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-08-01",
+      "sku": {
+        "name": "[parameters('smarthotelplanSkuName')]"
+      },
+      "dependsOn": [],
+      "tags": {
+        "displayName": "smarthotelplan"
+      },
+      "properties": {
+        "name": "[parameters('smarthotelplanName')]",
+        "numberOfWorkers": 1
+      }
+    },
+    {
+      "name": "[variables('smarthotelregistrationwebName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2018-02-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName'))]",
+        "[resourceId('microsoft.insights/components/', parameters('smarthotelappinsightsName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName')))]": "Resource",
+        "displayName": "smarthotelregistrationweb"
+      },
+      "properties": {
+        "name": "[variables('smarthotelregistrationwebName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName'))]"
+      },
+      "resources": [
+        {
+          "name": "appsettings",
+          "type": "config",
+          "apiVersion": "2018-02-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('smarthotelregistrationwebName'))]"
+          ],
+          "tags": {
+            "displayName": "appsettings"
+          },
+          "properties": {
+            "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(concat('microsoft.insights/components/', parameters('smarthotelappinsightsName'))).InstrumentationKey]",
+            "WcfServiceUri": "[concat('http://', reference(resourceId('Microsoft.Web/sites', variables('smarthotelregistrationwebName'))).defaultHostName, '/Service.svc')]",
+            "ApplicationInsightsAgent_EXTENSION_VERSION": "~2",
+            "XDT_MicrosoftApplicationInsights_Mode": "recommended",
+            "APPINSIGHTS_PROFILERFEATURE_VERSION": "1.0.0",
+            "DiagnosticServices_EXTENSION_VERSION": "~3",
+            "APPINSIGHTS_SNAPSHOTFEATURE_VERSION": "1.0.0",
+            "SnapshotDebugger_EXTENSION_VERSION": "~1",
+            "InstrumentationEngine_EXTENSION_VERSION": "~1",
+            "XDT_MicrosoftApplicationInsights_BaseExtensions": "disabled"
+          }
+        },
+        {
+          "name": "connectionstrings",
+          "type": "config",
+          "apiVersion": "2018-02-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('smarthotelregistrationwebName'))]",
+            "[resourceId('Microsoft.Sql/servers/databases', variables('smarthotelsqlserverName'), parameters('smarthotelregistrationsqldbName'))]"
+          ],
+          "tags": {
+            "hidden-related:/subscriptions/ca5ce512-88e1-44b1-97c6-22caf84fb2b0/resourceGroups/coreimagegallery-connect2018/providers/Microsoft.Web/serverfarms/smarthotelplan": "empty"
+          },
+          "properties": {
+            "DefaultConnection": {
+              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('smarthotelsqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('smarthotelregistrationsqldbName'), ';User Id=', parameters('smarthotelsqlserverAdminLoginUsername'), '@', variables('smarthotelsqlserverName'), ';Password=', parameters('smarthotelsqlserverAdminLoginPassword'), ';')]",
+              "type": "SQLAzure"
+            }
+          }
+        },
+        {
+          "name": "[concat(parameters('relaynamespaceName'), '/', parameters('hybridconnectionName'))]",
+          "type": "hybridConnectionNamespaces/relays",
+          "apiVersion": "2018-02-01",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('smarthotelregistrationwebName'))]"
+          ],
+          "tags": {
+            "displayName": "hyrbridconnection"
+          },
+          "properties": {
+            "serviceBusNamespace": "[variables('relaynamespaceName')]",
+            "relayName": "[parameters('hybridconnectionName')]",
+            "relayArmUri": "[variables('hybridConnectionResourceId')]",
+            "hostname": "[parameters('hybridhostname')]",
+            "port": "[parameters('hybridport')]",
+            "sendKeyName": "defaultSender",
+            "sendKeyValue": "",
+            "serviceBusSuffix": ".servicebus.windows.net"
+          }
+        }
+      ]
+    },
+    {
+      "name": "[concat(parameters('smarthotelplanName'), '-', resourceGroup().name)]",
+      "type": "Microsoft.Insights/autoscalesettings",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName')))]": "Resource",
+        "displayName": "smarthotelmonitoring AutoScale"
+      },
+      "properties": {
+        "name": "[concat(parameters('smarthotelplanName'), '-', resourceGroup().name)]",
+        "profiles": [
+          {
+            "name": "Default",
+            "capacity": {
+              "minimum": 1,
+              "maximum": 2,
+              "default": 1
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": 80
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "ChangeCount",
+                  "value": 1,
+                  "cooldown": "PT10M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "CpuPercentage",
+                  "metricResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName'))]",
+                  "timeGrain": "PT1M",
+                  "statistic": "Average",
+                  "timeWindow": "PT1H",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": 60
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "ChangeCount",
+                  "value": 1,
+                  "cooldown": "PT1H"
+                }
+              }
+            ]
+          }
+        ],
+        "enabled": false,
+        "targetResourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName'))]"
+      }
+    },
+    {
+      "name": "[concat('CPUHigh ', parameters('smarthotelplanName'))]",
+      "type": "Microsoft.Insights/alertrules",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName')))]": "Resource",
+        "displayName": "CPUHigh smarthotelmonitoring"
+      },
+      "properties": {
+        "name": "[concat('CPUHigh ', parameters('smarthotelplanName'))]",
+        "description": "[concat('The average CPU is high across all the instances of ', parameters('smarthotelplanName'))]",
+        "isEnabled": false,
+        "condition": {
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
+          "dataSource": {
+            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
+            "resourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName'))]",
+            "metricName": "CpuPercentage"
+          },
+          "operator": "GreaterThan",
+          "threshold": 90,
+          "windowSize": "PT15M"
+        },
+        "action": {
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
+          "sendToServiceOwners": true,
+          "customEmails": []
+        }
+      }
+    },
+    {
+      "name": "[concat('LongHttpQueue ', parameters('smarthotelplanName'))]",
+      "type": "Microsoft.Insights/alertrules",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-link:', resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName')))]": "Resource",
+        "displayName": "LongHttpQueue smarthotelmonitoring"
+      },
+      "properties": {
+        "name": "[concat('LongHttpQueue ', parameters('smarthotelplanName'))]",
+        "description": "[concat('The HTTP queue for the instances of ', parameters('smarthotelplanName'), ' has a large number of pending requests.')]",
+        "isEnabled": false,
+        "condition": {
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
+          "dataSource": {
+            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
+            "resourceUri": "[resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName'))]",
+            "metricName": "HttpQueueLength"
+          },
+          "operator": "GreaterThan",
+          "threshold": 100,
+          "windowSize": "PT5M"
+        },
+        "action": {
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
+          "sendToServiceOwners": true,
+          "customEmails": []
+        }
+      }
+    },
+    {
+      "name": "[concat('ServerErrors ', 'smarthotelmonitoring')]",
+      "type": "Microsoft.Insights/alertrules",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('smarthotelregistrationwebName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', variables('smarthotelregistrationwebName')))]": "Resource",
+        "displayName": "ServerErrors smarthotelmonitoring"
+      },
+      "properties": {
+        "name": "[concat('ServerErrors ', variables('smarthotelregistrationwebName'))]",
+        "description": "[concat(variables('smarthotelregistrationwebName'), ' has some server errors, status code 5xx.')]",
+        "isEnabled": false,
+        "condition": {
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
+          "dataSource": {
+            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
+            "resourceUri": "[resourceId('Microsoft.Web/sites', variables('smarthotelregistrationwebName'))]",
+            "metricName": "Http5xx"
+          },
+          "operator": "GreaterThan",
+          "threshold": 0,
+          "windowSize": "PT5M"
+        },
+        "action": {
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
+          "sendToServiceOwners": true,
+          "customEmails": []
+        }
+      }
+    },
+    {
+      "name": "[concat('ForbiddenRequests ', 'smarthotelmonitoring')]",
+      "type": "Microsoft.Insights/alertrules",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('smarthotelregistrationwebName'))]"
+      ],
+      "tags": {
+        "displayName": "ForbiddenRequests smarthotelmonitoring"
+      },
+      "properties": {
+        "name": "[concat('ForbiddenRequests ', variables('smarthotelregistrationwebName'))]",
+        "description": "[concat(variables('smarthotelregistrationwebName'), ' has some requests that are forbidden, status code 403.')]",
+        "isEnabled": false,
+        "condition": {
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
+          "dataSource": {
+            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
+            "resourceUri": "[resourceId('Microsoft.Web/sites', variables('smarthotelregistrationwebName'))]",
+            "metricName": "Http403"
+          },
+          "operator": "GreaterThan",
+          "threshold": 0,
+          "windowSize": "PT5M"
+        },
+        "action": {
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
+          "sendToServiceOwners": true,
+          "customEmails": []
+        }
+      }
+    },
+    {
+      "name": "[variables('smarthotelregistrationwcfName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-08-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName')))]": "Resource",
+        "displayName": "smarthotelregistrationwcf"
+      },
+      "properties": {
+        "name": "[variables('smarthotelregistrationwcfName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('smarthotelplanName'))]"
+      },
+      "resources": [
+        {
+          "name": "appsettings",
+          "type": "config",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('smarthotelregistrationwcfName'))]"
+          ],
+          "tags": {
+            "displayName": "appsettings"
+          },
+          "properties": {
+            "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(concat('microsoft.insights/components/', parameters('smarthotelappinsightsName'))).InstrumentationKey]",
+            "ApplicationInsightsAgent_EXTENSION_VERSION": "~2",
+            "XDT_MicrosoftApplicationInsights_Mode": "recommended",
+            "APPINSIGHTS_PROFILERFEATURE_VERSION": "1.0.0",
+            "DiagnosticServices_EXTENSION_VERSION": "~3",
+            "APPINSIGHTS_SNAPSHOTFEATURE_VERSION": "1.0.0",
+            "SnapshotDebugger_EXTENSION_VERSION": "~1",
+            "InstrumentationEngine_EXTENSION_VERSION": "~1",
+            "XDT_MicrosoftApplicationInsights_BaseExtensions": "disabled"
+          }
+        },
+        {
+          "name": "connectionstrings",
+          "type": "config",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('smarthotelregistrationwcfName'))]",
+            "[resourceId('Microsoft.Sql/servers/databases', variables('smarthotelsqlserverName'), parameters('smarthotelregistrationsqldbName'))]"
+          ],
+          "tags": {
+            "hidden-related:/subscriptions/ca5ce512-88e1-44b1-97c6-22caf84fb2b0/resourceGroups/coreimagegallery-connect2018/providers/Microsoft.Web/serverfarms/smarthotelplan": "empty"
+          },
+          "properties": {
+            "DefaultConnection": {
+              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('smarthotelsqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('smarthotelregistrationsqldbName'), ';User Id=', parameters('smarthotelsqlserverAdminLoginUsername'), '@', variables('smarthotelsqlserverName'), ';Password=', parameters('smarthotelsqlserverAdminLoginPassword'), ';')]",
+              "type": "SQLAzure"
+            }
+          }
+        }
+      ]
+
+    }
+  ],
+  "outputs": {}
+}

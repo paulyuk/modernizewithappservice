@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "relaynamespaceName": {
+      "value": "smarthotelrelay"
+    },
+    "hybridconnectionName": {
+      "value": "smarthotelcorpnet"
+    },
+    "hybridhostname": {
+      "value": "localhost"
+    },
+    "hybridport": {
+      "value": "2901"
+    },
+    "smarthotelplanSkuName": {
+      "value": "B1"
+    },
+    "smarthotelappinsightsName": {
+      "value": "smarthotelappinsights"
+    },
+    "smarthotelplanName": {
+      "value": "smarthotelplan"
+    },
+    "smarthotelregistrationwebName": {
+      "value": "smarthotelregistrationweb"
+    },
+    "smarthotelregistrationwcfName": {
+      "value": "smarthotelregistrationwcf"
+    },
+    "smarthotelsqlserverName": {
+      "value": "smarthotelsqlserver"
+    },
+    "smarthotelregistrationsqldbName": {
+      "value": "smarthotelregistrationssqldb"
+    },
+    "smarthotelsqlserverAdminLoginUsername": {
+      "value": "dbadmin"
+    },
+    "useuniquenamesuffixes": {
+      "value": "Enabled"
+    }
+  }
+}
